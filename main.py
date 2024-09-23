@@ -1,4 +1,5 @@
 import yt_dlp
+import av
 
 class YouTubeVideo:
     def __init__(self, url):
@@ -58,7 +59,6 @@ class YouTubeVideo:
     
     def download(self, save_path='.'):
         ydl_opts = {
-            'format': 'bestvideo',  # Get the best video only
             'outtmpl': save_path + '/%(title)s.%(ext)s',
         }
         
@@ -75,6 +75,53 @@ class YouTubeVideo:
     
     def videoPath(self):
         return self.video_path;
+
+    """
+    Does not work*
+    """
+    def merge_audio_video(self):
+        if not self.video_path or not self.audio_path:
+            print("Both video and audio must be downloaded first.")
+            return None
+        
+        output_path = self.video_path.replace('.mp4', '_merged.mp4')  # Change as needed
+        
+        # Open the input video and audio files
+        video_container = av.open(self.video_path)
+        audio_container = av.open(self.audio_path)
+        
+        # Create a new output container
+        output_container = av.open(output_path, 'w')
+        
+        # Add video stream
+        video_stream = output_container.add_stream('h264', rate=video_container.streams.video[0].rate)
+        audio_stream = output_container.add_stream('aac', rate=audio_container.streams.audio[0].rate)
+
+        for frame in video_container.decode(video=0):
+            # Encode video frame
+            packet = video_stream.encode(frame)
+            if packet:
+                output_container.mux(packet)
+
+        for frame in audio_container.decode(audio=0):
+            # Encode audio frame
+            packet = audio_stream.encode(frame)
+            if packet:
+                output_container.mux(packet)
+
+        # Flush streams
+        packet = video_stream.encode()
+        if packet:
+            output_container.mux(packet)
+
+        packet = audio_stream.encode()
+        if packet:
+            output_container.mux(packet)
+
+        output_container.close()
+        print(f"Merged video saved at: {output_path}")
+        return output_path
+
     
 
 # Example usage
@@ -93,7 +140,12 @@ print(f"Author: {video.author}")
 print(f"Released on: {video.release_time}")
 print(f"Pixel Ratio: {video.pixel_ratio}")
 
-# Optionally download the video and audio
 download_option = input("Do you want to download this video and audio? (yes/no): ")
 if download_option.lower() == 'yes':
-    video.download()
+    video.HighQualityDualDownload()
+
+    # # Merge audio and video
+    # merge_option = input("Do you want to merge audio and video? (yes/no): ")
+    # if merge_option.lower() == 'yes':
+    #     merged_path = video.merge_audio_video()
+    #     print(f"Merged video saved at: {merged_path}")
