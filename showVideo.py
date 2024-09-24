@@ -33,14 +33,12 @@ def image_to_ascii(image, new_width):
 def get_terminal_size():
     return os.get_terminal_size().columns, os.get_terminal_size().lines
 
-def play_video_in_ascii(video_path, fps=10):
+def play_video_in_ascii(video_path, default_fps=10):
     cap = cv2.VideoCapture(video_path)
 
     if not cap.isOpened():
         print(f"Error: Could not open video {video_path}")
         return
-
-    frame_delay = 1.0 / fps
 
     while True:
         ret, frame = cap.read()
@@ -53,6 +51,9 @@ def play_video_in_ascii(video_path, fps=10):
         # Convert the frame to PIL image format
         pil_image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
+        # Measure start time to calculate the rendering time
+        start_time = time.time()
+
         # Convert the image to ASCII
         ascii_frame = image_to_ascii(pil_image, new_width=terminal_width)
 
@@ -62,11 +63,16 @@ def play_video_in_ascii(video_path, fps=10):
         # Print the ASCII frame
         print(ascii_frame)
 
-        # Maintain a stable frame rate
-        time.sleep(frame_delay)
+        # Calculate rendering time and adjust sleep for FPS
+        render_time = time.time() - start_time
+        frame_delay = 1.0 / default_fps
+
+        # If rendering time is greater than frame delay, skip sleep to maintain timing
+        if render_time < frame_delay:
+            time.sleep(frame_delay - render_time)
 
     cap.release()
 
 # Example usage
 video_path = "E:\\projs\\Python_Apps\\5_Terminal-Youtube\\Kita Ikuyo dances to doodle song (Bocchi The Rock!).mp4"
-play_video_in_ascii(video_path, fps=10)
+play_video_in_ascii(video_path)
