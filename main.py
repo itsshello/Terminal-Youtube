@@ -142,7 +142,7 @@ print(f"Pixel Ratio: {video.pixel_ratio}")
 
 # download_option = input("Do you want to download this video and audio? (yes/no): ")
 # if download_option.lower() == 'yes':
-video.HighQualityDualDownload()
+video.HighQualityDualDownload(save_path="./v")
 
     # # Merge audio and video
     # merge_option = input("Do you want to merge audio and video? (yes/no): ")
